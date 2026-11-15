@@ -84,6 +84,10 @@ export const envSchema = z.object({
   TEMPLATE_VERDICT_READY: z.string().default('siga_verdict_pret'),
   TEMPLATE_SUB_REMINDER: z.string().default('siga_rappel_abonnement'),
 
+  // Pages légales (/legal/*) : brouillons à faire valider
+  LEGAL_ENTITY_NAME: z.string().default('SIGA'),
+  LEGAL_CONTACT_EMAIL: z.string().email().optional(),
+
   // Back-office
   /** Dossier du back-office compilé (siga-admin/dist), servi sous /backoffice */
   ADMIN_UI_DIR: z.string().default('../siga-admin/dist'),

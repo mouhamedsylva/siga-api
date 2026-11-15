@@ -1,0 +1,19 @@
+# HTTPS automatique (Let's Encrypt) devant l'API SIGA
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# La racine mène au back-office
+	redir / /backoffice/ 302
+
+	# API, webhook Meta, back-office, pages légales
+	reverse_proxy api:3000
+}

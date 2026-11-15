@@ -1,0 +1,12 @@
+#!/bin/sh
+# Raccourci Docker Compose pour la production SIGA.
+#   sh siga ps                 état des services
+#   sh siga logs -f api        journaux de l'API
+#   sh siga up -d --build      (re)construire et démarrer
+#   sh siga restart api
+set -eu
+ROOT="${SIGA_ROOT:-/opt/siga}"
+exec docker compose \
+  --env-file "$ROOT/.env" \
+  -f "$ROOT/siga-api/deploy/docker-compose.prod.yml" \
+  "$@"

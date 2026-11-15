@@ -10,6 +10,7 @@ import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
 import { AdminModule } from './admin/admin.module';
 import { InboundModule } from './inbound/inbound.module';
+import { LegalModule } from './legal/legal.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { StorageModule } from './storage/storage.module';
@@ -35,6 +36,7 @@ import { WhatsappModule } from './whatsapp/whatsapp.module';
     InboundModule,
     HealthModule,
     AdminModule,
+    LegalModule,
     MaintenanceModule,
     // Back-office compilé (siga-admin/dist), servi sous /backoffice ; ignoré s'il n'est pas construit
     ServeStaticModule.forRootAsync({

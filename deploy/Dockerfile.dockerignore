@@ -1,0 +1,15 @@
+# Fichiers exclus de l'image (contexte = dossier parent des deux dépôts)
+**/node_modules
+**/dist
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+**/storage
+**/tessdata
+**/coverage
+siga-api/bruno
+siga-api/test
+backups
+data
+*.log

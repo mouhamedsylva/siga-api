@@ -101,13 +101,27 @@ Le projet séparé `../siga-admin` est servi par l'API sous **`/backoffice`** un
 (`ADMIN_UI_DIR`, par défaut `../siga-admin/dist`). S'il n'est pas construit, l'API démarre sans lui.
 L'API envoie des en-têtes de sécurité (helmet, CSP `default-src 'self'`).
 
-## Déploiement Railway
+## Pages légales
 
-`railway.json` est à la **racine du dépôt** (le service Railway pointe sur la racine, pas sur `siga-api`) :
-installe et construit `siga-admin` puis `siga-api`, applique les migrations au pré-déploiement, démarre
-l'API (santé sur `/health`, redémarrage automatique). Ajouter les services MySQL et Redis (6.2+ recommandé),
-renseigner toutes les variables de `.env.example` (`NODE_ENV=production`), et utiliser un stockage S3/R2
-(le disque Railway n'est pas persistant sans volume).
+`/legal/confidentialite`, `/legal/cgu`, `/legal/suppression-donnees` : pages publiques exigées par Meta pour
+publier l'app et par le cahier des charges (CGU accessibles depuis le bot, via `TERMS_URL`).
+Contenu généré d'après la configuration réelle (rétention, tarifs, version des CGU) ;
+**brouillons à faire valider** juridiquement (CDP). Variables : `LEGAL_ENTITY_NAME`, `LEGAL_CONTACT_EMAIL`.
+
+## Déploiement (gratuit, Oracle Cloud)
+
+Guide pas à pas : **[deploy/DEPLOIEMENT.md](deploy/DEPLOIEMENT.md)**.
+VM Oracle Cloud « Always Free » (ARM) + Docker Compose : API et back-office (une image construite depuis
+les deux dépôts clonés côte à côte dans `/opt/siga`), MySQL 8.4, Redis 7, Caddy (HTTPS automatique, DuckDNS).
+
+| Fichier | Rôle |
+|---|---|
+| `deploy/Dockerfile` | image multi-étapes : back-office + API, migrations au démarrage |
+| `deploy/docker-compose.prod.yml` | mysql, redis, api, caddy ; données dans des volumes |
+| `deploy/Caddyfile` | HTTPS Let's Encrypt, `/` → `/backoffice/` |
+| `deploy/.env.production.example` | modèle de `/opt/siga/.env` |
+| `deploy/siga` | raccourci `docker compose` (`sh deploy/siga ps`, `logs -f api`…) |
+| `deploy/backup.sh` · `restore.sh` · `update.sh` | sauvegarde quotidienne, restauration, mise à jour |
 
 ## À faire hors code avant la mise en ligne
 

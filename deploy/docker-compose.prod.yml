@@ -1,0 +1,98 @@
+# SIGA — production (VM Oracle Cloud)
+# Toujours lancer via le script deploy/siga (il passe --env-file /opt/siga/.env) :
+#   /opt/siga/siga-api/deploy/siga up -d --build
+name: siga
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: ['--innodb-buffer-pool-size=256M', '--max-connections=60']
+    environment:
+      MYSQL_DATABASE: siga
+      MYSQL_USER: siga
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD manquant dans /opt/siga/.env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD manquant dans /opt/siga/.env}
+      TZ: UTC
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '--silent']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes', '--save', '60 1000']
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  api:
+    build:
+      context: ../..
+      dockerfile: siga-api/deploy/Dockerfile
+    image: siga-api:latest
+    restart: unless-stopped
+    # Secrets de production, hors des dépôts Git
+    env_file: ../../.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mysql://siga:${MYSQL_PASSWORD}@mysql:3306/siga
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - storage:/data/storage
+      - tessdata:/data/tessdata
+    expose:
+      - '3000'
+    mem_limit: 1536m
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN manquant dans /opt/siga/.env}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL manquant dans /opt/siga/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+# Volumes nommés : données persistantes, conservées lors des mises à jour
+volumes:
+  mysql:
+  redis:
+  storage:
+  tessdata:
+  caddy_data:
+  caddy_config:

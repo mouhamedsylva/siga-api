@@ -13,7 +13,7 @@ Environnement **Local** (en haut à droite) → **Configure** :
 | `adminPassword` 🔒 | le mot de passe correspondant (en clair, pas le hash) |
 | `verifyToken` 🔒 | valeur de WHATSAPP_VERIFY_TOKEN du .env |
 | `appSecret` 🔒 | valeur de META_APP_SECRET du .env |
-| `testWaId` | ton numéro WhatsApp au format international sans + (ex. 221771234567) |
+| `testWaId` 🔒 | ton numéro WhatsApp au format international sans + (ex. 221771234567) |
 
 Les variables 🔒 sont **secrètes** : Bruno ne les écrit pas dans les fichiers `.bru`, elles ne partent pas dans Git.
 
