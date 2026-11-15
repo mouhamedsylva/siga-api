@@ -1,0 +1,26 @@
+meta {
+  name: GET review
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/admin/review
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const rows = res.getBody() || [];
+  if (rows.length) bru.setEnvVar("verificationId", rows[0].id);
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Cas en attente de validation, les plus anciens d’abord. Le script place le premier dans `verificationId`.
+}

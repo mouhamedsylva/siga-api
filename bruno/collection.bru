@@ -1,0 +1,21 @@
+auth {
+  mode: basic
+}
+
+auth:basic {
+  username: {{adminUser}}
+  password: {{adminPassword}}
+}
+
+docs {
+  # SIGA API
+
+  Collection de toutes les routes de siga-api.
+
+  1. Choisir l'environnement **Local** (en haut à droite).
+  2. Renseigner les variables secrètes (voir `bruno/README.md`).
+  3. Démarrer l'API : `npm run start:dev` (MySQL + Redis de Laragon démarrés).
+
+  Les routes /admin héritent de l'authentification Basic de la collection.
+  Les routes /webhook et /health n'ont pas d'authentification (le POST est signé par script).
+}

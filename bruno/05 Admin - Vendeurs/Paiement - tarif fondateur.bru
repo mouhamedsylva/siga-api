@@ -1,0 +1,31 @@
+meta {
+  name: POST payment - fondateur
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/admin/sellers/{{sellerId}}/payments
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "amountXof": 2000,
+    "plan": "founder",
+    "months": 1,
+    "method": "wave",
+    "externalId": "REF-WAVE-A-REMPLACER"
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+}
+
+docs {
+  Enregistre un paiement manuel et active l’abonnement (EF-44, EF-64). La période démarre à la fin de l’abonnement en cours. Le vendeur reçoit une confirmation s’il a écrit dans les dernières 24 h (`notified`).
+}

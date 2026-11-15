@@ -1,0 +1,21 @@
+meta {
+  name: GET image
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/admin/verifications/{{verificationId}}/items/{{itemId}}/image
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Image de la preuve (capture ou SMS en image). 404 si elle a été purgée (IMAGE_RETENTION_DAYS).
+}

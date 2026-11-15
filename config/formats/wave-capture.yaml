@@ -1,0 +1,14 @@
+# EXEMPLE — écran de confirmation de l'application Wave (à valider en phase 0)
+id: wave-capture-v1
+operator: wave
+kind: capture
+example: true
+detect:
+  - 'wave'
+  - '(?:envoy[ée]|transfert|paiement)'
+fields:
+  amount: '(?:montant|envoy[ée])\s*:?\s*([\d][\d .,]*)\s*f'
+  ref: '(?:id de transaction|transaction|r[ée]f[ée]rence|ref)\s*:?\s*([A-Z0-9][A-Z0-9_.\-]{5,})'
+  datetime: '(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}(?:\s*(?:à|a)?\s*\d{1,2}\s*[:h]\s*\d{2})?)'
+  sender: '(?:de|exp[ée]diteur)\s*:?\s*([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ .\-]{1,40}?)\s*(?:\(|\d|$)'
+required: [amount, ref]

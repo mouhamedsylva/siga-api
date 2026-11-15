@@ -1,0 +1,30 @@
+meta {
+  name: GET webhook - bon jeton
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/webhook?hub.mode=subscribe&hub.verify_token={{verifyToken}}&hub.challenge=1234567890
+  body: none
+  auth: none
+}
+
+params:query {
+  hub.mode: subscribe
+  hub.verify_token: {{verifyToken}}
+  hub.challenge: 1234567890
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("renvoie le défi", function () {
+    expect(String(res.getBody())).to.equal("1234567890");
+  });
+}
+
+docs {
+  Simule la vérification de Meta lors de la configuration du webhook. `verifyToken` = WHATSAPP_VERIFY_TOKEN du .env.
+}

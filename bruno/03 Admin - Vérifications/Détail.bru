@@ -1,0 +1,27 @@
+meta {
+  name: GET verification
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/admin/verifications/{{verificationId}}
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const items = (res.getBody() || {}).items || [];
+  const img = items.find(function (i) { return i.image; });
+  if (img) bru.setEnvVar("itemId", img.id);
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Détail : règles déclenchées (reasons), scores de confiance, formats reconnus, pièces. Le script enregistre la première image dans `itemId`.
+}

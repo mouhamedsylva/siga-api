@@ -1,0 +1,27 @@
+meta {
+  name: POST review - confirmer
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/admin/review/{{verificationId}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "action": "send"
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+}
+
+docs {
+  Envoie au vendeur le verdict calculé par le moteur et décompte la vérification. 409 si déjà traitée.
+}

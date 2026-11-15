@@ -1,0 +1,24 @@
+meta {
+  name: POST webhook - sans signature
+  type: http
+  seq: 41
+}
+
+post {
+  url: {{baseUrl}}/webhook
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "object": "whatsapp_business_account",
+    "entry": []
+  }
+}
+
+tests {
+  test("statut 401", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

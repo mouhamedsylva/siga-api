@@ -1,0 +1,26 @@
+meta {
+  name: POST payment - standard 3 mois
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/admin/sellers/{{sellerId}}/payments
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "amountXof": 9000,
+    "plan": "standard",
+    "months": 3,
+    "method": "orange_money"
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

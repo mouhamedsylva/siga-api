@@ -1,0 +1,29 @@
+meta {
+  name: POST review - modifier
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/admin/review/{{verificationId}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "action": "send",
+    "verdict": "faux_probable",
+    "reason": "Le montant de la capture a été modifié"
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+}
+
+docs {
+  verdict : coherent | douteux | faux_probable. reason (3 à 120 caractères, facultatif) remplace la raison générique. Rester général pour ne pas guider un fraudeur.
+}

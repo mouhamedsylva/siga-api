@@ -1,0 +1,33 @@
+meta {
+  name: POST webhook - signature falsifiée
+  type: http
+  seq: 40
+}
+
+post {
+  url: {{baseUrl}}/webhook
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Hub-Signature-256: sha256=0000000000000000000000000000000000000000000000000000000000000000
+}
+
+body:json {
+  {
+    "object": "whatsapp_business_account",
+    "entry": []
+  }
+}
+
+tests {
+  test("statut 401", function () {
+    expect(res.getStatus()).to.equal(401);
+  });
+}
+
+docs {
+  Test de sécurité (§14) : toute requête dont la signature ne correspond pas est rejetée avant traitement.
+}

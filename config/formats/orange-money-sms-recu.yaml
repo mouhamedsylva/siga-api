@@ -1,0 +1,14 @@
+# EXEMPLE — à remplacer par le format réel observé en phase 0
+id: om-sms-recu-v1
+operator: orange_money
+kind: sms
+example: true
+detect:
+  - 'orange money|\bom\b'
+  - 're[cç]u'
+fields:
+  amount: 're[cç]u\s+(?:un transfert de\s+)?([\d][\d .,]*)\s*(?:f\s*cfa|fcfa|f)'
+  ref: '(?:trans(?:action)?\s*id|r[ée]f[ée]rence|ref)\s*:?\s*([A-Z0-9][A-Z0-9_.\-]{5,})'
+  datetime: '(\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}(?:\s*(?:à|a)?\s*\d{1,2}\s*[:h]\s*\d{2})?)'
+  sender: 'de\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ .\-]{1,40}?)\s*(?:\(|\d)'
+required: [amount, ref]

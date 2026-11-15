@@ -1,0 +1,23 @@
+meta {
+  name: GET webhook - mauvais jeton
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/webhook?hub.mode=subscribe&hub.verify_token=mauvais-jeton&hub.challenge=1234567890
+  body: none
+  auth: none
+}
+
+params:query {
+  hub.mode: subscribe
+  hub.verify_token: mauvais-jeton
+  hub.challenge: 1234567890
+}
+
+tests {
+  test("statut 403", function () {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

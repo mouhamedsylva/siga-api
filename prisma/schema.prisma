@@ -1,0 +1,196 @@
+// SIGA — modèle de données (cahier des charges §9, avec corrections) — MySQL 8 (Laragon)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  trial
+  founder
+  standard
+}
+
+/// Parcours d'onboarding uniquement ; le cycle d'une preuve est porté par Verification.status
+enum SellerState {
+  new
+  welcomed
+  active
+}
+
+enum VerificationStatus {
+  pending // pièces en cours de collecte (fenêtre de regroupement)
+  processing // extraction + règles en cours
+  in_review // en attente de l'administrateur
+  sent // verdict envoyé
+  rejected // illisible / incomplet : aucun décompte (EF-15)
+  failed // erreur technique
+}
+
+enum Verdict {
+  coherent
+  douteux
+  faux_probable
+}
+
+enum ItemKind {
+  image
+  text
+}
+
+model Seller {
+  id            BigInt      @id @default(autoincrement())
+  waId          String      @unique @map("wa_id")
+  displayName   String?     @map("display_name")
+  plan          Plan        @default(trial)
+  freeLeft      Int         @default(5) @map("free_left")
+  paidUntil     DateTime?   @map("paid_until")
+  state         SellerState @default(new)
+  stopped       Boolean     @default(false)
+  blocked       Boolean     @default(false)
+  lastInboundAt DateTime?   @map("last_inbound_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  deletedAt     DateTime?   @map("deleted_at")
+
+  consents      Consent[]
+  verifications Verification[]
+  payments      Payment[]
+  outbound      OutboundMessage[]
+
+  @@map("sellers")
+}
+
+model Consent {
+  id         BigInt   @id @default(autoincrement())
+  sellerId   BigInt   @map("seller_id")
+  docVersion String   @map("doc_version")
+  acceptedAt DateTime @default(now()) @map("accepted_at")
+  seller     Seller   @relation(fields: [sellerId], references: [id])
+
+  @@index([sellerId])
+  @@map("consents")
+}
+
+model Verification {
+  id         BigInt             @id @default(autoincrement())
+  sellerId   BigInt             @map("seller_id")
+  status     VerificationStatus @default(pending)
+  operator   String?
+  amountXof  Int?               @map("amount_xof")
+  /// HMAC-SHA256(HASH_SECRET, référence normalisée) — jamais la référence en clair
+  txRefHash  String?            @map("tx_ref_hash") @db.Char(64)
+  txDatetime DateTime?          @map("tx_datetime")
+  smsPresent Boolean            @default(false) @map("sms_present")
+  verdict    Verdict?
+  /// [{ rule: "R02", effect: "blocking" }, ...]
+  reasons    Json
+  confidence Json?
+  counted    Boolean            @default(false)
+  reviewedBy String?            @map("reviewed_by")
+  reviewedAt DateTime?          @map("reviewed_at")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  sentAt     DateTime?          @map("sent_at")
+
+  seller Seller             @relation(fields: [sellerId], references: [id])
+  items  VerificationItem[]
+
+  @@index([operator, txRefHash], map: "verifications_ref_idx")
+  @@index([sellerId, createdAt(sort: Desc)], map: "verifications_seller_idx")
+  @@index([status])
+  @@map("verifications")
+}
+
+/// Pièce reçue (capture ou SMS) rattachée à une vérification
+model VerificationItem {
+  id             BigInt       @id @default(autoincrement())
+  verificationId BigInt       @map("verification_id")
+  wamid          String       @unique
+  kind           ItemKind
+  /// Clé dans le stockage (images) ; null pour un texte
+  storageKey     String?      @map("storage_key")
+  mimeType       String?      @map("mime_type")
+  /// Texte collé (SMS) ; effacé après extraction
+  text           String?      @db.Text
+  receivedAt     DateTime     @default(now()) @map("received_at")
+  deletedAt      DateTime?    @map("deleted_at")
+  verification   Verification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+
+  @@index([verificationId])
+  @@index([receivedAt])
+  @@map("verification_items")
+}
+
+model Payment {
+  id          BigInt   @id @default(autoincrement())
+  sellerId    BigInt   @map("seller_id")
+  amountXof   Int      @map("amount_xof")
+  plan        Plan
+  method      String?
+  externalId  String?  @map("external_id")
+  periodStart DateTime @map("period_start") @db.Date
+  periodEnd   DateTime @map("period_end") @db.Date
+  recordedBy  String?  @map("recorded_by")
+  paidAt      DateTime @default(now()) @map("paid_at")
+  seller      Seller   @relation(fields: [sellerId], references: [id])
+
+  @@index([sellerId])
+  @@map("payments")
+}
+
+/// Idempotence : tout identifiant reçu de Meta (message ou statut) est enregistré une seule fois
+model InboundEvent {
+  id         String   @id @db.Char(64) // SHA-256 du wamid (collation MySQL insensible à la casse)
+  receivedAt DateTime @default(now()) @map("received_at")
+
+  @@map("inbound_events")
+}
+
+/// Messages envoyés et leurs accusés (envoyé, remis, lu, échec)
+model OutboundMessage {
+  id        BigInt   @id @default(autoincrement())
+  sellerId  BigInt?  @map("seller_id")
+  wamid     String?  @unique
+  kind      String // text | template
+  template  String?
+  status    String   @default("queued") // queued | sent | delivered | read | failed
+  error     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  seller    Seller?  @relation(fields: [sellerId], references: [id])
+
+  @@index([sellerId])
+  @@map("outbound_messages")
+}
+
+model AuditLog {
+  id     BigInt   @id @default(autoincrement())
+  actor  String
+  action String
+  target String?
+  detail Json?
+  at     DateTime @default(now())
+
+  @@index([at])
+  @@map("audit_log")
+}
+
+/// Paramètres modifiables à chaud (mode relecture, places fondateur…)
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+/// Verrou de ligne par empreinte de référence : sérialise la détection de doublons
+/// (SELECT ... FOR UPDATE, tenu jusqu'au COMMIT)
+model RefLock {
+  hash String @id @db.Char(64)
+
+  @@map("ref_locks")
+}

@@ -1,0 +1,25 @@
+meta {
+  name: POST logout
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/admin/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  X-SIGA-Admin: 1
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Détruit la session. Avec un cookie, toute requête qui modifie doit porter l'en-tête `X-SIGA-Admin: 1` (protection CSRF).
+}

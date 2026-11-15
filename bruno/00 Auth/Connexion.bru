@@ -1,0 +1,30 @@
+meta {
+  name: POST login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/admin/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "login": "{{adminUser}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Connexion du back-office : renvoie un cookie de session `siga_admin` (httpOnly, SameSite=Strict).
+  Bruno le conserve automatiquement pour les requêtes suivantes.
+  5 échecs en 15 minutes pour le même login et la même adresse IP → 429.
+}

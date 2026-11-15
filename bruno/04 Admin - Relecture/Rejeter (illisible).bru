@@ -1,0 +1,27 @@
+meta {
+  name: POST review - rejeter
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/admin/review/{{verificationId}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "action": "reject"
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+}
+
+docs {
+  Preuve inexploitable : le vendeur est invité à renvoyer une meilleure capture, sans décompte.
+}

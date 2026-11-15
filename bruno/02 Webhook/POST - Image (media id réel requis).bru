@@ -1,0 +1,59 @@
+meta {
+  name: POST webhook - Image (media id réel requis)
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{baseUrl}}/webhook
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "remplace": "par le script"
+  }
+}
+
+script:pre-request {
+  const CryptoJS = require("crypto-js");
+  const waId = bru.getEnvVar("testWaId");
+  const now = Math.floor(Date.now() / 1000);
+  const wamid = "wamid.BRUNO." + Date.now();
+
+  const value = {
+    messaging_product: "whatsapp",
+    metadata: { display_phone_number: "15550000000", phone_number_id: "BRUNO" },
+    contacts: [{ wa_id: waId, profile: { name: "Test Bruno" } }],
+    messages: [Object.assign({ id: wamid, from: waId, timestamp: String(now) }, { type: "image", image: { id: "REMPLACER_PAR_UN_MEDIA_ID", mime_type: "image/jpeg" } })]
+  };
+  const payload = {
+    object: "whatsapp_business_account",
+    entry: [{ id: "BRUNO", changes: [{ field: "messages", value: value }] }]
+  };
+
+  // La signature porte sur le corps exact envoyé (JSON compact)
+  const raw = JSON.stringify(payload);
+  const signature = CryptoJS.HmacSHA256(raw, bru.getEnvVar("appSecret")).toString(CryptoJS.enc.Hex);
+  req.setBody(payload);
+  req.setHeader("Content-Type", "application/json");
+  req.setHeader("X-Hub-Signature-256", "sha256=" + signature);
+  bru.setVar("lastWamid", wamid);
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Une image exige un vrai identifiant de média Meta (téléchargé via l’API Graph). Avec un faux id, SIGA répond « Je n’ai pas pu récupérer ton image ». Pour un vrai test, envoie la capture depuis ton téléphone.
+
+  Le corps est construit et signé par le script (onglet Script) avec `appSecret` (= META_APP_SECRET).
+  Chaque envoi utilise un wamid unique ; la réponse de SIGA part réellement sur WhatsApp vers `testWaId`
+  (ton numéro, ajouté comme destinataire de test dans Meta).
+
+  Si la signature est refusée (401) : passer Bruno en **Developer Mode** (scripts avec crypto-js).
+}

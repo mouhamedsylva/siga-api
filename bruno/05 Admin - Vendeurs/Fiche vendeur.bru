@@ -1,0 +1,21 @@
+meta {
+  name: GET seller
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/admin/sellers/{{sellerId}}
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Fiche (EF-63) : plan, essais restants, expiration, droits (entitlement), consommation du mois (usage), paiements, 20 dernières vérifications.
+}

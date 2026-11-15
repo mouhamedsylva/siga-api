@@ -1,0 +1,23 @@
+meta {
+  name: POST unblock
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/admin/sellers/{{sellerId}}/block
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "blocked": false
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

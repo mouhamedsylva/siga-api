@@ -1,0 +1,34 @@
+meta {
+  name: GET sellers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/admin/sellers?page=1&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page: 1
+  pageSize: 50
+  ~q: 77
+  ~plan: trial
+  ~blocked: false
+}
+
+script:post-response {
+  const rows = (res.getBody() || {}).rows || [];
+  if (rows.length) bru.setEnvVar("sellerId", rows[0].id);
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Recherche par numéro ou nom (q), plan (trial, founder, standard), blocked. Le script place le premier vendeur dans `sellerId`.
+}

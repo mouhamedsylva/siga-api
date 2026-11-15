@@ -1,0 +1,27 @@
+meta {
+  name: POST block
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/admin/sellers/{{sellerId}}/block
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "blocked": true
+  }
+}
+
+tests {
+  test("statut 201", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+}
+
+docs {
+  Un numéro bloqué ne reçoit plus aucune réponse (EF-07).
+}

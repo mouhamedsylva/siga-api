@@ -1,0 +1,40 @@
+meta {
+  name: GET verifications
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/admin/verifications?page=1&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page: 1
+  pageSize: 50
+  ~status: in_review
+  ~verdict: douteux
+  ~sellerId: 1
+  ~from: 2026-11-01
+  ~to: 2026-11-30
+}
+
+script:post-response {
+  const rows = (res.getBody() || {}).rows || [];
+  if (rows.length) bru.setEnvVar("verificationId", rows[0].id);
+}
+
+tests {
+  test("statut 200", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Liste filtrable (EF-61). Filtres disponibles (cocher dans l'onglet Params) :
+  status (pending, processing, in_review, sent, rejected, failed), verdict (coherent, douteux, faux_probable),
+  sellerId, from, to (dates ISO), page, pageSize (max 200).
+
+  Le script enregistre l'id de la première ligne dans `verificationId`.
+}
