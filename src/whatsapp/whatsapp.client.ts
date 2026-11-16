@@ -97,7 +97,9 @@ export class WhatsappClient {
         error: res.ok ? null : String(json.error?.code ?? res.status),
       },
     });
-    if (!res.ok) {
+    if (res.ok) {
+      this.logger.log(`Message envoyé à ${maskPhone(to)} (${meta.kind})`);
+    } else {
       this.logger.error(
         `Envoi échoué vers ${maskPhone(to)} : HTTP ${res.status}, code ${json.error?.code ?? '-'}`,
       );

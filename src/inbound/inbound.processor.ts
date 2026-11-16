@@ -50,6 +50,9 @@ export class InboundProcessor extends WorkerHost {
       this.logger.debug('Message rejoué ignoré');
       return;
     }
+    this.logger.log(
+      `Message reçu (${data.message.type}) de ${maskPhone(data.message.from)}`,
+    );
 
     // Limitation de débit : au-delà du seuil, messages ignorés (un seul avertissement)
     const { count, limited } = await this.rateLimiter.hit(data.message.from);
