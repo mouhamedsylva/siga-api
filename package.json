@@ -23,7 +23,8 @@
     "db:generate": "prisma generate",
     "postinstall": "prisma generate",
     "admin:hash": "node scripts/hash-password.js",
-    "meta:check": "node scripts/check-meta.js"
+    "meta:check": "node scripts/check-meta.js",
+    "audit:prod": "node scripts/audit-prod.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1168.0",

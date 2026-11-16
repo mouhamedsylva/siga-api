@@ -99,6 +99,19 @@ export class InboundProcessor extends WorkerHost {
     status: MessageStatus,
     attemptsMade: number,
   ): Promise<void> {
+    // Un message accepté par Meta peut échouer ensuite à la livraison : seul ce statut le dit
+    const err = status.errors?.[0];
+    if (attemptsMade === 0) {
+      const line = `Statut ${status.status} pour ${maskPhone(status.recipient_id)}`;
+      if (err) {
+        this.logger.warn(
+          `${line} : code ${err.code} « ${err.title} »${err.error_data?.details ? ` — ${err.error_data.details}` : ''}`,
+        );
+      } else {
+        this.logger.log(line);
+      }
+    }
+
     const current = await this.prisma.outboundMessage.findUnique({
       where: { wamid: status.id },
       select: { status: true },
@@ -116,7 +129,7 @@ export class InboundProcessor extends WorkerHost {
       where: { wamid: status.id },
       data: {
         status: status.status,
-        error: status.errors?.[0]?.code?.toString() ?? null,
+        error: err ? `${err.code} ${err.title}`.slice(0, 180) : null,
       },
     });
   }

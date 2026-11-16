@@ -29,7 +29,12 @@ export interface MessageStatus {
   status: 'sent' | 'delivered' | 'read' | 'failed';
   timestamp: string;
   recipient_id: string;
-  errors?: Array<{ code: number; title: string }>;
+  errors?: Array<{
+    code: number;
+    title: string;
+    message?: string;
+    error_data?: { details?: string };
+  }>;
 }
 
 /** Job placé dans la file d'entrée : un message ou un statut. */

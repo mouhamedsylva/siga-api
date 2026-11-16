@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Get,
   HttpCode,
+  Logger,
   Post,
   Query,
   UseGuards,
@@ -18,6 +19,8 @@ import type { InboundJob, WebhookPayload } from './whatsapp.types';
 
 @Controller('webhook')
 export class WebhookController {
+  private readonly logger = new Logger(WebhookController.name);
+
   constructor(
     private readonly config: AppConfig,
     @InjectQueue(INBOUND_QUEUE) private readonly inbound: Queue<InboundJob>,
@@ -49,6 +52,14 @@ export class WebhookController {
   @UseGuards(SignatureGuard)
   async receive(@Body() payload: WebhookPayload): Promise<{ ok: true }> {
     const jobs = extractJobs(payload);
+    // Trace de chaque appel de Meta (sans contenu ni numéro) : indispensable pour diagnostiquer
+    const messages = jobs.filter((j) => j.kind === 'message').length;
+    this.logger.log(
+      `Webhook Meta : ${messages} message(s), ${jobs.length - messages} statut(s)` +
+        (payload?.object !== 'whatsapp_business_account'
+          ? ` (objet inattendu : ${String(payload?.object)})`
+          : ''),
+    );
     if (jobs.length) {
       await this.inbound.addBulk(
         jobs.map((data) => ({
