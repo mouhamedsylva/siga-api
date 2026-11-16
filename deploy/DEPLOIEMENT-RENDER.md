@@ -130,7 +130,13 @@ Sur developers.facebook.com, app SIGA :
 2. **Paramètres de l'app > De base** : URL de confidentialité `…/legal/confidentialite`, conditions `…/legal/cgu`,
    instructions de suppression des données `…/legal/suppression-donnees`, icône, catégorie → *Enregistrer*.
 3. **Publier l'app** (sans publication, Meta ne transmet pas les vrais messages).
-4. Envoie « Bonjour » au numéro SIGA depuis WhatsApp.
+4. **Abonner l'app au compte WhatsApp Business** : le bouton *Tester* peut fonctionner alors que les vrais
+   messages partent vers l'app interne de Meta (« WA DevX Webhook Events »). Sur ton PC, ajoute à `.env`
+   `WHATSAPP_WABA_ID=` (ID du compte WhatsApp Business, page « Étape 1. Faites un essai »), puis
+   `npm run meta:check` : la ligne « App SIGA abonnée aux messages du compte » doit être verte.
+   Sinon, la commande affichée par le script abonne l'app (`POST /{WABA_ID}/subscribed_apps` avec le jeton).
+5. Envoie « Bonjour » au numéro SIGA depuis WhatsApp ; dans les **Logs** Render :
+   `Message reçu (text) de …` puis `Message envoyé à … (text)`.
 
 Tu peux ensuite arrêter ngrok et l'API locale.
 

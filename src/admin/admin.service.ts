@@ -114,7 +114,10 @@ export class AdminService {
       });
       await erasePastedText(this.prisma, id);
       if (isWithinSessionWindow(v.seller.lastInboundAt)) {
-        await this.wa.sendText(v.seller.waId, MSG.unreadable, v.seller.id);
+        // Le rejet est enregistré : un échec d'envoi est seulement journalisé
+        await this.wa
+          .sendText(v.seller.waId, MSG.unreadable, v.seller.id)
+          .catch(() => undefined);
       }
     } else {
       if (!decision.verdict && !v.verdict)
@@ -218,12 +221,12 @@ export class AdminService {
         .split('-')
         .reverse()
         .join('/');
-      await this.wa.sendText(
-        seller.waId,
-        MSG.subscriptionActivated(until),
-        seller.id,
-      );
-      notified = true;
+      // Le paiement est déjà enregistré : un échec d'envoi ne doit pas faire croire à un échec
+      // (l'admin risquerait de l'enregistrer deux fois). L'échec est journalisé par WhatsappClient.
+      notified = await this.wa
+        .sendText(seller.waId, MSG.subscriptionActivated(until), seller.id)
+        .then(() => true)
+        .catch(() => false);
     }
     return { payment, seller, notified };
   }

@@ -76,6 +76,34 @@ const phoneId = env.WHATSAPP_PHONE_NUMBER_ID;
     );
   }
 
+  // 3. L'app doit être abonnée aux webhooks du compte WhatsApp Business,
+  //    sinon Meta n'envoie que les messages de test du tableau de bord.
+  const waba = env.WHATSAPP_WABA_ID;
+  if (!waba) {
+    console.log(
+      '  ⚠️  WHATSAPP_WABA_ID absent du .env : abonnement aux messages non vérifié\n' +
+        '      (ID du compte WhatsApp Business, page « Étape 1. Faites un essai »)',
+    );
+  } else {
+    const subs = await fetch(
+      `https://graph.facebook.com/${version}/${waba}/subscribed_apps`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    ).then((r) => r.json());
+    const apps = (subs.data ?? []).map((a) => a.whatsapp_business_api_data ?? a);
+    if (subs.error) {
+      ko(`Abonnements illisibles : ${subs.error.message}`);
+      failed = true;
+    } else if (apps.some((a) => String(a.id) === String(d.app_id))) {
+      ok(`App ${d.application} abonnée aux messages du compte ${waba}`);
+    } else {
+      ko(
+        `App ${d.application} NON abonnée aux messages du compte ${waba} : les vrais messages n'arriveront pas.\n` +
+          `      Correction : POST https://graph.facebook.com/${version}/${waba}/subscribed_apps (avec le jeton)`,
+      );
+      failed = true;
+    }
+  }
+
   console.log(failed ? '\nÀ corriger avant de continuer.' : '\nTout est bon.');
   process.exit(failed ? 1 : 0);
 })().catch((e) => {
