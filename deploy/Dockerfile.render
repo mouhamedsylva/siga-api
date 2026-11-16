@@ -1,0 +1,74 @@
+# syntax=docker/dockerfile:1.7
+#
+# Image SIGA pour Render (offre gratuite) : construite à partir du seul dépôt siga-api.
+# Le back-office (dépôt privé siga-admin) est récupéré pendant la construction grâce à
+# un jeton GitHub en lecture seule (variable d'environnement Render GITHUB_TOKEN,
+# transmise par Render comme argument de construction).
+# Le jeton n'existe que dans l'étape « admin » : il n'est pas dans l'image finale.
+
+# ---------- 1. Back-office ----------
+FROM node:20-bookworm-slim AS admin
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+ARG GITHUB_TOKEN
+ARG SIGA_ADMIN_REPO=mouhamedsylva/siga-admin
+ARG SIGA_ADMIN_REF=main
+# Change à chaque déploiement de siga-api : le back-office est re-téléchargé à jour
+ARG RENDER_GIT_COMMIT=local
+WORKDIR /build
+RUN if [ -z "$GITHUB_TOKEN" ]; then \
+      echo "ERREUR : variable GITHUB_TOKEN absente dans Render (Environment)"; exit 1; \
+    fi \
+ && echo "Back-office ${SIGA_ADMIN_REPO}@${SIGA_ADMIN_REF} (déploiement ${RENDER_GIT_COMMIT})" \
+ && git clone --depth 1 --branch "$SIGA_ADMIN_REF" \
+      "https://x-access-token:${GITHUB_TOKEN}@github.com/${SIGA_ADMIN_REPO}.git" siga-admin \
+ && rm -rf siga-admin/.git
+WORKDIR /build/siga-admin
+RUN npm ci --no-audit --no-fund && npm run build
+
+# ---------- 2. API ----------
+FROM node:20-bookworm-slim AS api
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /build/siga-api
+COPY package.json package-lock.json ./
+# Le schéma est nécessaire au « prisma generate » lancé par postinstall
+COPY prisma ./prisma
+RUN npm ci --no-audit --no-fund
+COPY . .
+RUN npm run build \
+ && npm prune --omit=dev --no-audit --no-fund \
+ && npx prisma generate
+
+# ---------- 3. Exécution ----------
+FROM node:20-bookworm-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssl ca-certificates tini \
+ && rm -rf /var/lib/apt/lists/*
+
+# Render fournit PORT (10000 par défaut). Disque éphémère : images en base (STORAGE_BACKEND=db).
+# 512 Mo de mémoire sur l'offre gratuite : on borne le tas Node.
+ENV NODE_ENV=production \
+    ADMIN_UI_DIR=/app/admin \
+    FORMATS_DIR=/app/config/formats \
+    STORAGE_BACKEND=db \
+    STORAGE_LOCAL_DIR=/tmp/storage \
+    OCR_CACHE_DIR=/tmp/tessdata \
+    NODE_OPTIONS=--max-old-space-size=384
+
+WORKDIR /app
+COPY --from=api --chown=node:node /build/siga-api/package.json ./package.json
+COPY --from=api --chown=node:node /build/siga-api/node_modules ./node_modules
+COPY --from=api --chown=node:node /build/siga-api/dist ./dist
+COPY --from=api --chown=node:node /build/siga-api/prisma ./prisma
+COPY --from=api --chown=node:node /build/siga-api/config ./config
+COPY --from=admin --chown=node:node /build/siga-admin/dist ./admin
+COPY deploy/entrypoint.sh /usr/local/bin/siga-entrypoint
+RUN sed -i 's/\r$//' /usr/local/bin/siga-entrypoint \
+ && chmod +x /usr/local/bin/siga-entrypoint
+
+USER node
+EXPOSE 10000
+ENTRYPOINT ["/usr/bin/tini", "--", "siga-entrypoint"]

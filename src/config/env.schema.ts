@@ -28,6 +28,11 @@ export const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
 
+  /**
+   * Stockage des images : auto (S3 si STORAGE_ENDPOINT, sinon disque local),
+   * local, s3, ou db (dans MySQL : pour les hébergeurs au disque éphémère, ex. Render gratuit)
+   */
+  STORAGE_BACKEND: z.enum(['auto', 'local', 's3', 'db']).default('auto'),
   // Stockage S3 compatible (optionnel : sinon disque local)
   STORAGE_ENDPOINT: z.string().url().optional(),
   STORAGE_BUCKET: z.string().optional(),

@@ -194,3 +194,14 @@ model RefLock {
 
   @@map("ref_locks")
 }
+
+/// Images des preuves stockées en base (STORAGE_BACKEND=db) : pour les hébergeurs
+/// au disque éphémère (Render gratuit). Purgées comme les autres après IMAGE_RETENTION_DAYS.
+model MediaBlob {
+  key       String   @id @db.VarChar(255)
+  mimeType  String   @map("mime_type") @db.VarChar(100)
+  data      Bytes    @db.MediumBlob
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("media_blobs")
+}

@@ -108,7 +108,17 @@ publier l'app et par le cahier des charges (CGU accessibles depuis le bot, via `
 Contenu généré d'après la configuration réelle (rétention, tarifs, version des CGU) ;
 **brouillons à faire valider** juridiquement (CDP). Variables : `LEGAL_ENTITY_NAME`, `LEGAL_CONTACT_EMAIL`.
 
-## Déploiement (gratuit, Oracle Cloud)
+## Déploiement
+
+### Option recommandée : gratuit, sans carte bancaire (Render + TiDB + Redis Cloud)
+
+Guide pas à pas : **[deploy/DEPLOIEMENT-RENDER.md](deploy/DEPLOIEMENT-RENDER.md)**.
+`render.yaml` (Blueprint) + `deploy/Dockerfile.render` : Render construit ce dépôt et récupère le back-office
+(`siga-admin`, privé) avec un jeton GitHub en lecture seule. Base : TiDB Cloud Starter (compatible MySQL) ;
+Redis : Redis Cloud Free ; images stockées en base (`STORAGE_BACKEND=db`, disque Render éphémère) ;
+cron-job.org appelle `/health` toutes les 10 min pour éviter la mise en veille.
+
+### Alternative : VM Oracle Cloud (gratuite, carte bancaire demandée)
 
 Guide pas à pas : **[deploy/DEPLOIEMENT.md](deploy/DEPLOIEMENT.md)**.
 VM Oracle Cloud « Always Free » (ARM) + Docker Compose : API et back-office (une image construite depuis

@@ -1,0 +1,67 @@
+# Render Blueprint — SIGA sur l'offre gratuite (sans carte bancaire)
+# Base MySQL : TiDB Cloud Starter · Redis : Redis Cloud Free · images en base (STORAGE_BACKEND=db)
+# Guide : deploy/DEPLOIEMENT-RENDER.md
+# Les variables « sync: false » sont demandées par Render à la création (secrets, jamais dans Git).
+services:
+  - type: web
+    name: siga-api
+    runtime: docker
+    plan: free
+    # Francfort : la région Render la plus proche du Sénégal
+    region: frankfurt
+    dockerfilePath: ./deploy/Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # --- Construction : accès en lecture au dépôt privé siga-admin ---
+      - key: GITHUB_TOKEN
+        sync: false
+
+      # --- Infrastructure ---
+      - key: NODE_ENV
+        value: production
+      - key: STORAGE_BACKEND
+        value: db
+      - key: DATABASE_URL # TiDB : mysql://UTILISATEUR:MOTDEPASSE@HOTE:4000/siga?sslaccept=strict
+        sync: false
+      - key: REDIS_URL # Redis Cloud : redis://default:MOTDEPASSE@HOTE:PORT
+        sync: false
+
+      # --- WhatsApp Cloud API ---
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: GRAPH_API_VERSION
+        value: v23.0
+
+      # --- Sécurité (HASH_SECRET : le même que le .env local) ---
+      - key: HASH_SECRET
+        sync: false
+      - key: ADMIN_USERS
+        sync: false
+      - key: ADMIN_WA_ID
+        sync: false
+
+      # --- Pages légales et offre ---
+      - key: TERMS_URL # https://siga-api.onrender.com/legal/cgu (adapter au nom du service)
+        sync: false
+      - key: TERMS_VERSION
+        value: 2026-11-v1
+      - key: LEGAL_ENTITY_NAME
+        value: SIGA
+      - key: LEGAL_CONTACT_EMAIL
+        sync: false
+      - key: PAYMENT_INSTRUCTIONS
+        sync: false
+
+      # --- Fonctionnement ---
+      - key: REVIEW_MODE
+        value: 'true'
+      - key: IMAGE_RETENTION_DAYS
+        value: '30'

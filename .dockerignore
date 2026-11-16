@@ -1,0 +1,13 @@
+# Fichiers exclus de l'image Docker (construction depuis ce dépôt, ex. Render)
+node_modules
+dist
+coverage
+.git
+.env
+.env.*
+!.env.example
+storage
+tessdata
+bruno
+test
+*.log
